@@ -51,22 +51,24 @@ def save_excel_as_is(contract_sheet, folder_path, employee_name, excel_instance)
         # 절대 경로로 변환
         folder_path = os.path.abspath(folder_path)
 
-        # 새로운 워크북 생성 및 시트 복사 수행
-        new_workbook = excel_instance.Workbooks.Add()
-        contract_sheet.Copy(Before=new_workbook.Sheets(1))
+        # 파일 저장 경로 설정 (타임스탬프 미사용)
+        excel_path = os.path.join(folder_path, f"{employee_name}_contract.xlsx")
+        excel_path = os.path.normpath(excel_path)  # 경로 정규화하여 슬래시와 백슬래시 문제 해결
 
-        # 고유한 파일 이름 생성 (타임스탬프 및 고유 ID 사용)
-        unique_id = time.strftime("%Y%m%d%H%M%S")
-        excel_path = os.path.join(folder_path, f"{employee_name}_contract_{unique_id}.xlsx")
-
-        # 경로 정규화하여 슬래시와 백슬래시 문제 해결
-        excel_path = os.path.normpath(excel_path)
+        # 파일이 이미 존재하는지 확인
+        if os.path.exists(excel_path):
+            print(f"파일이 이미 존재합니다: {excel_path}. 저장을 건너뜁니다.")
+            return  # 파일이 존재하면 저장하지 않고 함수 종료
 
         # 디버깅을 위해 경로 출력
         print(f"Saving Excel to: {excel_path}")
 
         # 저장 경로가 존재하는지 확인
         os.makedirs(folder_path, exist_ok=True)
+
+        # 새로운 워크북 생성 및 시트 복사 수행
+        new_workbook = excel_instance.Workbooks.Add()
+        contract_sheet.Copy(Before=new_workbook.Sheets(1))
 
         # 새로운 워크북 저장 및 닫기
         new_workbook.SaveAs(excel_path)
@@ -76,4 +78,3 @@ def save_excel_as_is(contract_sheet, folder_path, employee_name, excel_instance)
 
     except Exception as e:
         print(f"Error saving {employee_name}'s contract: {e}")
-
