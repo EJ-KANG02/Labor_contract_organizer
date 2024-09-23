@@ -31,6 +31,7 @@ class LaborContractOrganizerApp:
         self.file_paths = []
 
     def select_files(self):
+        # 여러 개의 엑셀 파일 선택 가능
         self.file_paths = filedialog.askopenfilenames(title="엑셀 파일 선택", filetypes=[("Excel files", "*.xlsx")])
         if self.file_paths:
             self.file_list_label.config(text="\n".join(self.file_paths))
@@ -53,14 +54,15 @@ class LaborContractOrganizerApp:
         excel_instance.DisplayAlerts = False
         
         try:
+            # 선택된 모든 파일을 처리
             for file_path in self.file_paths:
+                print(f"Processing file: {file_path}")
                 contracts = extract_contracts(file_path, excel_instance)
                 organize_by_category(contracts, category, excel_instance)
-
         finally:
             excel_instance.Quit()
 
-        messagebox.showinfo("완료", "파일 처리가 완료되었습니다.")
+        messagebox.showinfo("완료", "모든 파일 처리가 완료되었습니다.")
 
 if __name__ == "__main__":
     root = tk.Tk()
