@@ -3,36 +3,42 @@ import win32com.client as win32
 
 def organize_by_category(contracts, category, excel_instance):
     """
-    사원별 계약서를 카테고리별로 분류하여 저장
-    contracts: 사원 이름과 근로계약서 시트
-    category: '담당 업무', '근무 장소', '시급' 중 하나
+    사원별 계약서를 카테고리별로 분류하여 저장.
+    근로계약서와 시급제계약서 폴더를 각각 구분하여 저장.
     """
-    for employee_name, contract_sheet in contracts:
-        try:
-            if contract_sheet is None:
-                print(f"Error: {employee_name}의 계약서가 올바르게 로드되지 않았습니다.")
+    for contract_type, contract_list in contracts.items():
+        for employee_name, contract_sheet in contract_list:
+            try:
+                if contract_sheet is None:
+                    print(f"Error: {employee_name}의 계약서가 올바르게 로드되지 않았습니다.")
+                    continue
+
+                # 카테고리 값 추출
+                if contract_type == "근로계약서":
+                    if category == "담당 업무":
+                        category_value = contract_sheet.Range("AB8").Value or "Unknown"
+                    elif category == "근무 장소":
+                        category_value = contract_sheet.Range("AB3").Value or "Unknown"
+                    elif category == "시급":
+                        category_value = contract_sheet.Range("AB16").Value or "Unknown"
+                else:  # 시급제계약서
+                    if category == "담당 업무":
+                        category_value = contract_sheet.Range("AB8").Value or "Unknown"
+                    elif category == "근무 장소":
+                        category_value = contract_sheet.Range("AB4").Value or "Unknown"
+                    elif category == "시급":
+                        category_value = contract_sheet.Range("AB11").Value or "Unknown"
+
+                # 근로계약서/시급제계약서 폴더 생성
+                folder_path = os.path.join("uploads/output", contract_type,f"{category}", f"{category_value}")
+                os.makedirs(folder_path, exist_ok=True)
+
+                # 계약서 저장
+                save_excel_as_is(contract_sheet, folder_path, employee_name, excel_instance)
+
+            except Exception as e:
+                print(f"Error processing {employee_name}: {e}")
                 continue
-
-            # 카테고리 값 추출
-            if category == "담당 업무":
-                category_value = contract_sheet.Range("AB8").Value or "Unknown"
-            elif category == "근무 장소":
-                category_value = contract_sheet.Range("AB3").Value or "Unknown"
-            elif category == "시급":
-                category_value = contract_sheet.Range("AB16").Value or "Unknown"
-            else:
-                continue
-
-            # 카테고리별 폴더 생성
-            folder_path = os.path.join("uploads/output", f"{category}_{category_value}")
-            os.makedirs(folder_path, exist_ok=True)
-
-            # 엑셀 파일 저장
-            save_excel_as_is(contract_sheet, folder_path, employee_name, excel_instance)
-
-        except Exception as e:
-            print(f"Error processing {employee_name}: {e}")
-            continue
 
 def save_excel_as_is(contract_sheet, folder_path, employee_name, excel_instance):
     """
