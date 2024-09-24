@@ -50,8 +50,8 @@ class LaborContractOrganizerApp:
 
         # Excel 인스턴스 생성
         excel_instance = win32.Dispatch("Excel.Application")
-        excel_instance.Visible = False
-        excel_instance.DisplayAlerts = False
+        excel_instance.Visible = False  # 팝업창이 뜨지 않도록 설정
+        excel_instance.DisplayAlerts = False  # 경고창도 나타나지 않게 설정
         
         try:
             # 선택된 모든 파일을 처리
