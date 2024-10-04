@@ -5,6 +5,9 @@ def extract_contracts(file_path, excel_instance):
     """
     엑셀 파일에서 근로계약서와 시급제 계약서를 추출하여 리스트로 반환.
     """
+    # 엑셀 창 숨김 설정
+    excel_instance.Visible = False  # 엑셀 창을 보이지 않게 설정
+
     contracts = {
         "근로계약서": [],
         "시급제계약서": []
@@ -13,13 +16,29 @@ def extract_contracts(file_path, excel_instance):
     # 원본 엑셀 파일 열기
     workbook = excel_instance.Workbooks.Open(file_path)
     
-    # 급여설계 시트와 근로계약서, 시급제계약서 시트 로드
+    # 급여설계 시트 로드
     try:
         salary_sheet = workbook.Sheets("급여설계")
-        contract_sheet = workbook.Sheets("1. 근로계약서")
-        hourly_contract_sheet = workbook.Sheets("1-1. 시급제계약서")
     except Exception as e:
-        print(f"Error loading sheets: {e}")
+        print(f"Error loading 급여설계 시트: {e}")
+        workbook.Close(SaveChanges=False)
+        return contracts
+
+    # 근로계약서 시트 로드 시도
+    try:
+        contract_sheet = workbook.Sheets("1. 근로계약서")
+    except Exception:
+        contract_sheet = None
+
+    # 시급제계약서 시트 로드 시도
+    try:
+        hourly_contract_sheet = workbook.Sheets("1-1. 시급제계약서")
+    except Exception:
+        hourly_contract_sheet = None
+
+    # 시트가 없으면 오류 메시지 출력 후 종료
+    if contract_sheet is None and hourly_contract_sheet is None:
+        print("Error: 근로계약서와 시급제계약서 시트가 모두 없습니다.")
         workbook.Close(SaveChanges=False)
         return contracts
 
@@ -35,8 +54,7 @@ def extract_contracts(file_path, excel_instance):
             break
         
         # 연번이 숫자로만 된 경우에는 근로계약서 추출
-        if re.match(r"^\d+$", str(employee_number).strip()):  # 숫자인지 확인
-            print(f"근로계약서 존재")
+        if re.match(r"^\d+$", str(employee_number).strip()) and contract_sheet:
             if employee_name:
                 # 근로계약서 시트에서 사원의 이름을 AB6 셀에 입력
                 contract_sheet.Range("AB6").Value = employee_name
@@ -50,8 +68,7 @@ def extract_contracts(file_path, excel_instance):
                 contracts["근로계약서"].append((employee_name, new_contract_sheet))
 
         # 연번이 시급제계약서인 경우
-        elif re.match(r"^시급\d+$", str(employee_number)):  # 시급1, 시급2 등 확인
-            print(f"시급제계약서 존재")
+        elif re.match(r"^시급\d+$", str(employee_number)) and hourly_contract_sheet:
             if employee_name:
                 # 시급제계약서 시트에서 사원의 이름을 AB6 셀에 입력
                 hourly_contract_sheet.Range("AB6").Value = employee_name
